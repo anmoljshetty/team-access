@@ -25,3 +25,11 @@ Thumbs.db
 # Database / Volumes (if mapped locally)
 *.db
 *.sqlite
+
+# AI Assistant & Tooling Folders
+.agents/
+.claude/
+.cursor/
+.devin/
+
+prisma-8.md

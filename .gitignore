@@ -26,10 +26,4 @@ Thumbs.db
 *.db
 *.sqlite
 
-# AI Assistant & Tooling Folders
-.agents/
-.claude/
-.cursor/
-.devin/
-
-prisma-8.md
+refactor.md

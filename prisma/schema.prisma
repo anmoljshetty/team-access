@@ -1,12 +1,18 @@
-// use prisma-8
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
 
 model User {
   id             String          @id @default(uuid())
   email          String          @unique
   name           String?
   passwordHash   String
-  createdAt      TimestamptzString @default(now())
-  updatedAt      temporal.updatedAtString()
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   ownedProjects  Project[]       @relation("ProjectOwner")
   tasks          Task[]
@@ -26,8 +32,8 @@ model Project {
   status      ProjectStatus   @default(ACTIVE)
   ownerId     String
   owner       User            @relation("ProjectOwner", fields: [ownerId], references: [id])
-  createdAt   TimestamptzString @default(now())
-  updatedAt   temporal.updatedAtString()
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   tasks          Task[]
   projectMembers ProjectMember[]
@@ -48,9 +54,9 @@ model Task {
   assignee    User?      @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
   status      TaskStatus @default(PENDING)
   priority    Int        @default(1)
-  dueDate     TimestamptzString?
-  createdAt   TimestamptzString @default(now())
-  updatedAt   temporal.updatedAtString()
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum MemberRole {
@@ -66,8 +72,8 @@ model ProjectMember {
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      MemberRole @default(MEMBER)
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@id([projectId, userId])
 }

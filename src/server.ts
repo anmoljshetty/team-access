@@ -1,10 +1,8 @@
+import "dotenv/config";
 import app from "./app";
-import dotenv from "dotenv"
-dotenv.config();
-
 import { connectDB, prisma } from "./config/db";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 const startServer = async () => {
     await connectDB();

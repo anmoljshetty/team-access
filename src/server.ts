@@ -1,11 +1,13 @@
 import "dotenv/config";
 import app from "./app";
 import { connectDB, prisma } from "./config/db";
+import { connectRedis } from "./config/redis";
 
 const PORT = process.env.PORT;
 
 const startServer = async () => {
     await connectDB();
+    await connectRedis();
 
     const server = app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

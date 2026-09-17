@@ -4,7 +4,7 @@ import { redisClient } from "../config/redis";
 import { email, z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/db";
-import { generateAndSetTokens } from "../utils/token.util";
+import { generateAndSetTokens, hashToken } from "../utils/token.util";
 import { error } from "console";
 import { hash } from "crypto";
 import { id } from "zod/locales";
@@ -63,10 +63,9 @@ async function signup(req: Request, res: Response): Promise<void> {
   }
 }
 
-
-
 async function login(req: Request, res: Response): Promise<void> {
   try {
+    console.log(`Refresh token is ${req.cookies?.refreshToken}`)
     const parsedData = userSchema.safeParse(req.body);
 
     if (!parsedData.success) {
@@ -109,7 +108,64 @@ async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function refresh(req: Request, res: Response): Promise<void> {
+  try {
+    // ? prevents .refreshToken if req.cookies is undefined (avoids crash basically)
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!refreshToken) {
+      res.status(401).json({ error: "Refresh token is missing" });
+      return;
+    }
+
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!jwtRefreshSecret) {
+      res.status(500).json({ error: "Server configuration error" });
+      return;
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(refreshToken, jwtRefreshSecret);
+    } catch (err) {
+      res.status(401).json({ error: "Invalid or expired refresh token" });
+      return;
+    }
+
+    const { userId, jti } = decoded;
+    
+    if (!jti) {
+      res.status(401).json({ error: "Invalid refresh token format" });
+      return;
+    }
+
+    const redisKey = `refresh_token:${userId}`;
+    const hashedRefreshToken = await redisClient.get(redisKey);
+
+    if (!hashedRefreshToken) {
+      res.status(401).json({ error: "Refresh token not found or expired" });
+      return;
+    }
+
+    const incomingHash = hashToken(jti);
+    const isValid = incomingHash === hashedRefreshToken;
+    
+    if (!isValid) {
+      res.status(401).json({ error: "Invalid refresh token" });
+      return;
+    }
+
+    await generateAndSetTokens(res, userId);
+
+    res.status(200).json({ message: "Tokens refreshed successfully" });
+  } catch (error) {
+    console.error("Refresh error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export {
   signup,
-  login
+  login,
+  refresh
 };
